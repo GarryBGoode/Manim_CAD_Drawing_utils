@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "manim-PluginTemplate"
+version = "0.1.5"
+description = "A template project to both illustrate and serve as an example for plugin creations on top of the manim (community edition) engine."
+license = "MIT"
+authors = ["The Manim Community Developers"]
+readme = "README.md"
+repository = "https://github.com/ManimCommunity/manim-plugintemplate"
+documentation="https://docs.manim.community/en/latest/installation/plugins.html"
+classifiers= [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Graphics",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+	"Programming Language :: Python :: 3.9",
+    "Natural Language :: English",
+]
+
+[tool.poetry.dependencies]
+python = "^3.6.2"
+manim = ">=0.3"
+
+[tool.poetry.plugins."manim.plugins"]
+"manim_plugintemplate" = "manim_plugintemplate"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
