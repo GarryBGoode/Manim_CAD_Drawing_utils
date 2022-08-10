@@ -148,44 +148,6 @@ def chamfer_corners(mob:VMobject,offset=0.2):
     return mob
 
 
-class Test_corners(Scene):
-    def construct(self):
-        # mob1 = Star(n=10,density=4.5,outer_radius=4)
-        # mob1.points[1::4,:] = mob1.points[1::4,:]+rotate_vector(UP*(0.4*np.random.random()+0.2),np.random.random()*TAU)
-        # mob1.points[2::4, :] = mob1.points[2::4, :] + rotate_vector(UP * (0.4*np.random.random()+0.2), np.random.random() * TAU)
-
-        mob1 = RegularPolygon(n=4,radius=1.5,color=PINK).rotate(PI/4)
-        mob2 = Triangle(radius=1.5,color=TEAL)
-        crbase = Rectangle(height=0.5,width=3)
-        mob3 = Union(crbase.copy().rotate(PI/4),crbase.copy().rotate(-PI/4),color=BLUE)
-        mob4 = Circle(radius=1.3)
-        mob2.shift(2.5*UP)
-        mob3.shift(2.5*DOWN)
-        mob1.shift(2.5*LEFT)
-        mob4.shift(2.5*RIGHT)
-        # mob2 = mob1.copy()
-        # mob2.points=np.empty((0,3))
-        # for n in range(mob1.get_num_curves()):
-        #     n1=n
-        #     n2=(n+1)%mob1.get_num_curves()
-        #     params,loc = round_corner_param(0.2,
-        #                                 mob1.get_nth_curve_points(n1),
-        #                                 mob1.get_nth_curve_points(n2))
-        #     cutoff_points_2 = partial_bezier_points(mob1.get_nth_curve_points(n2),loc[1],1)
-        #     cutoff_points_1 = partial_bezier_points(mob1.get_nth_curve_points(n1), 0, loc[0])
-        #     arc1 = Arc(**params)
-        #     mob1.points[n1*4:(n1+1)*4,:]=cutoff_points_1
-        #     mob1.points[n2*4:(n2+1)*4,:]=cutoff_points_2
-        #     mob2.points = np.concatenate((mob2.points,mob1.points[n1*4:n2*4,:],cutoff_points_1,arc1.points,cutoff_points_2),axis=0)
-        # mob2.make_smooth()
-        # mob1 = round_corners(mob1, 0.25)
-        # mob2 = round_corners(mob2,0.25)
-        # mob3 = round_corners(mob3, 0.25)
-        mob1 = chamfer_corners(mob1, 0.25)
-        mob2 = chamfer_corners(mob2,0.25)
-        mob3 = chamfer_corners(mob3, 0.25)
-
-        self.add(mob1,mob2,mob3,mob4)
 
 
 

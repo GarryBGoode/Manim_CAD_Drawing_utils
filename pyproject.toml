@@ -21,8 +21,8 @@ classifiers= [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6.2"
-manim = ">=0.15"
+python = ">=3.7,<3.11"
+manim = ">=0.15.2<=1.0"
 scipy = "*"
 
 [tool.poetry.plugins."manim.plugins"]

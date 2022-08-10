@@ -41,12 +41,27 @@ class Pointer_Label_Free(VDict):
 class Pointer_To_Mob(Pointer_Label_Free):
     def __init__(self, mob:Mobject, proportion,  text:str, dist=1, **kwargs):
         point = mob.point_from_proportion(proportion)
-        offset = normalize(point - mob.get_center())*dist
+
+        # if the mob center and point happens to be the same, it causes problems
+        # it can happen if all the mob is 1 point
+        offset_ref = point - mob.get_center()
+        if np.linalg.norm(offset_ref)>1e-6:
+            offset = normalize(point - mob.get_center())*dist
+        else:
+            # I had no better idea to handle this than to go upright
+            offset = normalize(RIGHT+UP)*dist
         super().__init__(point,text, offset_vector=offset,**kwargs)
 
     def update_mob(self,mob, proportion, dist=1):
         point = mob.point_from_proportion(proportion)
-        offset = normalize(point - mob.get_center())*dist
+        # if the mob center and point happens to be the same, it causes problems
+        # it can happen if all the mob is 1 point
+        offset_ref = point - mob.get_center()
+        if np.linalg.norm(offset_ref) > 1e-6:
+            offset = normalize(point - mob.get_center()) * dist
+        else:
+            # I had no better idea to handle this than to go upright
+            offset = normalize(RIGHT + UP) * dist
         super().update_point(point,offset)
 
 
@@ -122,7 +137,7 @@ class Linear_Dimension(VDict):
         self.add({'text': textmob})
 
 
-class Angle_Dimension_3point(VDict):
+class Angle_Dimension_3point(VGroup):
     def __init__(self,start,end, arc_center,offset=2,text=None, outside_arrow=False,**kwargs):
         super().__init__(**kwargs)
         if not 'stroke_width' in kwargs:
