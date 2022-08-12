@@ -7,24 +7,34 @@ import copy
 
 class test_offset(Scene):
     def construct(self):
-        vt = ValueTracker(0.1)
+        vt = ValueTracker(0)
         multipliers = [1,2,3]
-        ref_mob = Arc(radius=0.5,start_angle=PI/4,angle=PI/2,color=BLUE).shift(DOWN)
+        ref_mob = Arc(radius=1,start_angle=PI/4,angle=PI/2,color=BLUE,num_components=3).shift(DOWN*2)
+        # ref_mob.points[-1,:] = ref_mob.points[-1:,:] + 0.2 * UP
+        # ref_mob.points[0, :] = ref_mob.points[0, :] + 0.2 * UP
         Ofs_grp = VGroup()
         ofs_func_list = []
 
-        def ofs_func(s,v):
-            return - v * vt.get_value()
+        def ofs_func1(s):
+            return - 1 * vt.get_value()
 
-        for m in multipliers:
-            offset_mob = Path_Offset_Mobject(ref_mob,num_of_samples=20, ofs_func=lambda s: ofs_func(s,copy.deepcopy(m)),color=BLUE)
+        def ofs_func2(s):
+            return - 2 * vt.get_value()
+
+        def ofs_func3(s):
+            return - 3 * vt.get_value()
+
+        func_arry = [ofs_func1,ofs_func2,ofs_func3]
+
+        for k in range(3):
+            offset_mob = Path_Offset_Mobject(ref_mob,num_of_samples=20, ofs_func=func_arry[k],color=BLUE)
             Ofs_grp.add(offset_mob)
         for k in range(len(Ofs_grp)):
             Ofs_grp[k].add_updater(Ofs_grp[k].default_updater)
         Ofs_grp.update()
         self.play(Create(ref_mob))
         self.add(Ofs_grp)
-        self.play(vt.animate.set_value(0.33),run_time=3)
+        self.play(vt.animate.set_value(0.4),run_time=1)
 
 class test_bulge(Scene):
     def construct(self):
