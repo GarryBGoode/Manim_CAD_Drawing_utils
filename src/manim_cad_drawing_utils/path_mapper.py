@@ -58,6 +58,20 @@ class Path_mapper(VMobject):
             return self.equalize_alpha(rate_func(t))
         return eq_func
 
+    def point_from_proportion(self, alpha: float) -> np.ndarray:
+        '''
+         Override original implementation.
+         Should be the same, except it uses pre calculated length table and should be faster a bit.
+        '''
+        a = self.alpha_from_length(alpha*self.get_path_length())
+        if a==1:
+            index = self.path.get_num_curves()-1
+            remainder = 1
+        else:
+            index = int(a * self.path.get_num_curves() // 1)
+            remainder = (a * self.path.get_num_curves()) % 1
+        return self.path.get_nth_curve_function(index)(remainder)
+
     def get_bezier_index_from_length(self,s):
         a = self.alpha_from_length(s) % 1
         nc = self.path.get_num_curves()
@@ -73,6 +87,10 @@ class Path_mapper(VMobject):
         bzf = bezier(dpoints)
         point = bzf(bz_a)
         return normalize(point)
+
+    def get_tangent_angle(self,s):
+        tv = self.get_tangent_unit_vector(s)
+        return angle_of_vector(tv)
 
     def get_normal_unit_vector(self,s):
         tv = self.get_tangent_unit_vector(s)
@@ -157,84 +175,83 @@ class Path_Offset_Mobject(VDict):
         super().__init__(**kwargs)
         self['path'] = Path_mapper(target_mobject)
         self['path'].add_updater(lambda mob: mob.generate_length_map())
+        self.t_range = np.linspace(0, 1, 100)
         self.ofs_func = ofs_func
-        self.s_scaling_factor =  1/self['path'].get_path_length()
-        self.generate_ref_curve()
-        # self.s_scaling_factor =  self.ref_curve_path.get_path_length()
+        self.s_scaling_factor = 1/self['path'].get_path_length()
         curve1,curve2 = self.generate_offset_paths()
         closed_path = VMobject(**kwargs)
         closed_path.points = curve1.points
         curve2.reverse_direction()
         closed_path.points = np.append(closed_path.points, curve2.points,axis=0)
         self['ofs_mobj'] = closed_path
-        # self.s_scaling_factor=1
+
+
+    def generate_bezier_points(self, input_func,t_range, Smoothing=True):
+        # generate bezier 4-lets with numerical difference
+        out_data = []
+        for k in range(len(t_range)-1):
+            t = t_range[k]
+            t2 = t_range[k+1]
+            val1 = input_func(t)
+            val2 = input_func(t2)
+            p1 = val1
+            p4 = val2
+            if Smoothing:
+                diff1 = (input_func(t + 1e-6) - input_func(t)) / 1e-6
+                diff2 = (input_func(t2) - input_func(t2 - 1e-6)) / 1e-6
+                p2 = val1 + diff1 * (t2 - t) / 3
+                p3 = val2 - diff2 * (t2 - t) / 3
+            else:
+                p2 = (val1 * 2 + val2) / 3
+                p3 = (val1 + val2 * 2) / 3
+            out_data.append([p1,p2,p3,p4])
+        return out_data
+
 
     def generate_ref_curve(self):
         self.ref_curve = VMobject()
-        n=self['path'].path.get_num_curves()
-        a_ref = (np.linspace(0, 1, n * 10))
-        self.ref_curve.points = np.empty((0, 3))
-        for k in range(len(a_ref)-1):
-            p0 = np.reshape(self['path'].path.point_from_proportion(a_ref[k]), (1, 3))
-            p1 = np.reshape(self['path'].path.point_from_proportion((a_ref[k]*2+a_ref[k + 1]*1)/3), (1, 3))
-            p2 = np.reshape(self['path'].path.point_from_proportion((a_ref[k]*1+a_ref[k + 1]*2)/3), (1, 3))
-            p3 = np.reshape(self['path'].path.point_from_proportion(a_ref[k + 1]), (1, 3))
-            self.ref_curve.points = np.concatenate((self.ref_curve.points,p0,p1,p2,p3),axis=0)
-        self.ref_curve.make_smooth()
-        n2 = self.ref_curve.get_num_curves()
-        # alpha_ref = np.linspace(0,1,n2+1)
-        self.alpha_ref = np.linspace(0,1,n2+1)
-        # for k in range(len(alpha_ref)-1):
-        #     self.alpha_ref.extend([alpha_ref[k],alpha_ref[k],alpha_ref[k+1],alpha_ref[k+1]])
+        bez_point = self.generate_bezier_points(self['path'].point_from_proportion,self.t_range)
+        for point in bez_point:
+            self.ref_curve.append_points(point)
         self.ref_curve_path = Path_mapper(self.ref_curve)
 
-    def generate_offset_bezier_points(self):
-        points = np.empty(0)
-        for k in range(len(self.alpha_ref)-1):
-            a = self.alpha_ref[k]
-            a2 = self.alpha_ref[k+1]
-            s = self.ref_curve_path.length_from_alpha(a) * self.s_scaling_factor
-            s2 = self.ref_curve_path.length_from_alpha(a2) * self.s_scaling_factor
-            ds = 1e-3
-            diff = (self.ofs_func(s + ds) - self.ofs_func(s - ds)) / 2 / ds
-            diff2 = (self.ofs_func(s2 + ds) - self.ofs_func(s2 - ds)) / 2 / ds
-            p0 = self.ofs_func(s)
-            p1 = p0 + diff*(s2-s)*1/3
-            p3 = self.ofs_func(s2)
-            p2 = p3 - diff2*(s2-s)*1/3
-
-            points=np.append(points,[p0,p1,p2,p3])
-
+    def generate_offset_func_points(self,Smoothing=True):
+        points = self.generate_bezier_points(self.ofs_func,self.t_range,Smoothing=Smoothing)
         return points
 
-    def generate_offset_paths(self):
+    def generate_normal_vectors(self):
+        s_range = self.t_range*self['path'].get_path_length()
+        angles = self.generate_bezier_points(self['path'].get_tangent_angle,s_range)
+        # return self.generate_bezier_points(self['path'].get_normal_unit_vector,s_range,Smoothing=False)
+        out = []
+        # for s in s_range:
+        #     out.append(self['path'].get_normal_unit_vector(s))
+        #     out.append(self['path'].get_normal_unit_vector(s))
+        # return out
+        for angle in angles:
+            out.append([np.array([-np.sin(a),np.cos(a),0])for a in angle])
+        return out
+
+    def generate_offset_paths(self,gen_ofs_point=True,gen_norm_v=True,gen_ref_curve=True):
         curve1 = VMobject()
         curve1.points = np.empty((0, 3))
         curve2 = VMobject()
         curve2.points = np.empty((0, 3))
-        ofs_points = self.generate_offset_bezier_points()
-        ofs_vectors =np.empty((0,3))
+        if gen_ref_curve:
+            self.generate_ref_curve()
+        if gen_ofs_point:
+            self.ofs_points = self.generate_offset_func_points()
+        if gen_norm_v:
+            self.norm_vectors =self.generate_normal_vectors()
+        n = self.ref_curve.get_num_curves()
+        ofs_vectors = np.empty((n*4,3))
+        for k in range(len(self.ofs_points)):
+            for j in range(len(self.ofs_points[k])):
+                ofs_vectors[k*4+j,:] = self.norm_vectors[k][j] * self.ofs_points[k][j]
 
-        for k in range(len(self.alpha_ref)-1):
-            a = self.alpha_ref[k]
-            s = self.ref_curve_path.length_from_alpha(a)
-            nv = np.reshape(self.ref_curve_path.get_normal_unit_vector(s), (1, 3))
-            a2 = self.alpha_ref[k+1]
-            s2 = self.ref_curve_path.length_from_alpha(a2)
-            nv2 = np.reshape(self.ref_curve_path.get_normal_unit_vector(s2), (1, 3))
-            # ofs_v_1 = np.reshape(ofs_points[k]*nv, (1, 3))
-            # ofs_v_2 = np.reshape(ofs_points[k+1] * nv, (1, 3))
-            # ofs_v_3 = np.reshape(ofs_points[k+2] * nv2, (1, 3))
-            # ofs_v_4 = np.reshape(ofs_points[k+3] * nv2, (1, 3))
-            ofs_vectors = np.concatenate([ofs_vectors,nv,nv,nv2,nv2],axis=0)
-
-        for k in range(len(ofs_points)):
-            ofs_vectors[k,:] = ofs_vectors[k,:] * ofs_points[k]
-        # ofs_vectors = np.prod([ofs_vectors,ofs_points],axis=1)
         curve1.points = self.ref_curve.points + ofs_vectors
         curve2.points = self.ref_curve.points - ofs_vectors
-        # curve1.make_smooth()
-        # curve2.make_smooth()
+
         return (curve1,curve2)
 
 
