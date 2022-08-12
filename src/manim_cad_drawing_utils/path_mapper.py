@@ -73,10 +73,13 @@ class Path_mapper(VMobject):
         return self.path.get_nth_curve_function(index)(remainder)
 
     def get_bezier_index_from_length(self,s):
-        a = self.alpha_from_length(s) % 1
+        a = self.alpha_from_length(s)
         nc = self.path.get_num_curves()
         indx = int(a * nc // 1)
         bz_a = a * nc % 1
+        if indx==nc:
+            indx = nc-1
+            bz_a=1
         return (indx,bz_a)
 
     def get_tangent_unit_vector(self,s):
@@ -126,7 +129,7 @@ class Dashed_line_mobject(VDict):
         self.add({'dashes':dshgrp})
 
     def generate_dash_pattern_metric(self,dash_len,space_len, num_dashes, offset=0):
-        ''' generate dash pattern in metric length space'''
+        ''' generate dash pattern in metric curve-length space'''
         period = dash_len + space_len
         n = num_dashes
         full_len = self['path'].get_path_length()
@@ -157,10 +160,7 @@ class Dashed_line_mobject(VDict):
         return self.generate_dash_pattern_metric(dash_len, space_len, n, offset=(offset-1)*period)
 
     def generate_dash_mobjects(self,dash_starts=[0],dash_ends=[1]):
-        # ref_mob = VMobject()
-        # ref_mob.match_points(self['path'].path)
         ref_mob = self['path'].path
-        # VMobject.pointwise_become_partial()
         a_list = self['path'].alpha_from_length(dash_starts)
         b_list = self['path'].alpha_from_length(dash_ends)
         ret=[]
@@ -171,20 +171,17 @@ class Dashed_line_mobject(VDict):
 
 
 class Path_Offset_Mobject(VDict):
-    def __init__(self,target_mobject, ofs_func, **kwargs):
+    def __init__(self,target_mobject, ofs_func, num_of_samples=100, **kwargs):
         super().__init__(**kwargs)
         self['path'] = Path_mapper(target_mobject)
         self['path'].add_updater(lambda mob: mob.generate_length_map())
-        self.t_range = np.linspace(0, 1, 100)
+        self.t_range = np.linspace(0, 1, num_of_samples)
         self.ofs_func = ofs_func
         self.s_scaling_factor = 1/self['path'].get_path_length()
-        curve1,curve2 = self.generate_offset_paths()
-        closed_path = VMobject(**kwargs)
-        closed_path.points = curve1.points
-        curve2.reverse_direction()
-        closed_path.points = np.append(closed_path.points, curve2.points,axis=0)
-        self['ofs_mobj'] = closed_path
-
+        curve1 = self.generate_offset_paths()
+        mobject_curve = VMobject(**kwargs)
+        mobject_curve.points = curve1
+        self['ofs_mobj'] = mobject_curve
 
     def generate_bezier_points(self, input_func,t_range, Smoothing=True):
         # generate bezier 4-lets with numerical difference
@@ -221,38 +218,32 @@ class Path_Offset_Mobject(VDict):
 
     def generate_normal_vectors(self):
         s_range = self.t_range*self['path'].get_path_length()
+        # generate normal vectors from tangent angles and turning them 90°
+        # the angles can be interpolated with bezier, unit normal vectors would not remain 'unit' under interpolation
         angles = self.generate_bezier_points(self['path'].get_tangent_angle,s_range)
-        # return self.generate_bezier_points(self['path'].get_normal_unit_vector,s_range,Smoothing=False)
         out = []
-        # for s in s_range:
-        #     out.append(self['path'].get_normal_unit_vector(s))
-        #     out.append(self['path'].get_normal_unit_vector(s))
-        # return out
         for angle in angles:
             out.append([np.array([-np.sin(a),np.cos(a),0])for a in angle])
         return out
 
-    def generate_offset_paths(self,gen_ofs_point=True,gen_norm_v=True,gen_ref_curve=True):
-        curve1 = VMobject()
-        curve1.points = np.empty((0, 3))
-        curve2 = VMobject()
-        curve2.points = np.empty((0, 3))
+    def generate_offset_paths(self,gen_ofs_point=True, gen_ref_curve=True):
         if gen_ref_curve:
             self.generate_ref_curve()
+            self.norm_vectors = self.generate_normal_vectors()
         if gen_ofs_point:
             self.ofs_points = self.generate_offset_func_points()
-        if gen_norm_v:
-            self.norm_vectors =self.generate_normal_vectors()
+
         n = self.ref_curve.get_num_curves()
         ofs_vectors = np.empty((n*4,3))
         for k in range(len(self.ofs_points)):
             for j in range(len(self.ofs_points[k])):
                 ofs_vectors[k*4+j,:] = self.norm_vectors[k][j] * self.ofs_points[k][j]
 
-        curve1.points = self.ref_curve.points + ofs_vectors
-        curve2.points = self.ref_curve.points - ofs_vectors
+        return self.ref_curve.points + ofs_vectors
 
-        return (curve1,curve2)
+    def default_updater(self,gen_ofs_point=True, gen_ref_curve=True):
+        self['ofs_mobj'].points = self.generate_offset_paths(gen_ofs_point,gen_ref_curve)
+
 
 
 
