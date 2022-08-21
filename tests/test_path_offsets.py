@@ -1,7 +1,7 @@
 import numpy as np
 from manim import *
-from manim_cad_drawing_utils.path_mapper import *
-from manim_cad_drawing_utils.round_corners import *
+from path_mapper import *
+from round_corners import *
 import copy
 
 
