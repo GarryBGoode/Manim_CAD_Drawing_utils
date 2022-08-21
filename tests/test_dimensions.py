@@ -8,23 +8,29 @@ class test_dimension_pointer(Scene):
         dim1 = Pointer_To_Mob(mob1,p.get_value(),r'triangel')
         dim1.add_updater(lambda mob: mob.update_mob(mob1,p.get_value()))
         dim1.update()
-
-        dim2 = Linear_Dimension(mob1.point_from_proportion(0),mob1.point_from_proportion(0.2),
-                                direction=UP,
-                                offset=-0,
-                                color=RED)
-        # dim3 = Linear_Dimension(mob1.point_from_proportion(2/3),mob1.point_from_proportion(1/3),
-        #                         direction=DOWN,color=RED,
-        #                         outside_arrow=True)
-
-
-
-        # self.add(mob1,dim1)
-        self.play(Create(mob1))
+        PM = Path_mapper(mob1)
+        self.play(Create(mob1),rate_func=PM.equalize_rate_func(smooth))
         self.play(Create(dim1))
         self.play(p.animate.set_value(1),run_time=10)
-        self.play(Uncreate(mob1),Uncreate(dim1))
+        self.play(Uncreate(mob1,rate_func=PM.equalize_rate_func(smooth)))
+        self.play(Uncreate(dim1))
         self.wait()
+
+class test_dimension_base(Scene):
+    def construct(self):
+        mob1 = round_corners(Triangle().scale(2),0.3)
+        dim1 = Linear_Dimension(mob1.get_critical_point(UP),
+                                mob1.get_critical_point(DOWN),
+                                direction=RIGHT,
+                                offset=3,
+                                color=RED)
+        dim2 = Linear_Dimension(mob1.get_critical_point(RIGHT),
+                                mob1.get_critical_point(LEFT),
+                                direction=UP,
+                                offset=-3,
+                                color=RED)
+
+        self.add(mob1,dim1,dim2)
 
 class test_dimension(Scene):
     def construct(self):

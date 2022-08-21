@@ -3,11 +3,6 @@ from manim_cad_drawing_utils import *
 
 class test(Scene):
     def construct(self):
-        # mob1 = Triangle().scale(2)
-        # mob1 = FunctionGraph(lambda t: t**5,[-1,1,0.1],color=WHITE)
-        # mob1 = Line(start=LEFT,end=LEFT*0.5)
-        # mob1.add_line_to(RIGHT).scale(4)
-        # mob1 = Circle(radius=3)
         mob1 = round_corners(Square().scale(3),radius=0.8).shift(DOWN*0)
         vt = ValueTracker(0)
         dash1 = Dashed_line_mobject(mob1,num_dashes=36,dashed_ratio=0.5,dash_offset=0)
@@ -20,6 +15,5 @@ class test(Scene):
         dash1.add_updater(dash_updater)
 
         self.add(dash1)
-        # mob1.set_stroke(opacity=0)
         self.play(vt.animate.set_value(2),run_time=6)
         self.wait(0.5)

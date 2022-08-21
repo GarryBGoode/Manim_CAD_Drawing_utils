@@ -3,10 +3,6 @@ from manim_cad_drawing_utils import *
 
 class Test_chamfer(Scene):
     def construct(self):
-        # mob1 = Star(n=10,density=4.5,outer_radius=4)
-        # mob1.points[1::4,:] = mob1.points[1::4,:]+rotate_vector(UP*(0.4*np.random.random()+0.2),np.random.random()*TAU)
-        # mob1.points[2::4, :] = mob1.points[2::4, :] + rotate_vector(UP * (0.4*np.random.random()+0.2), np.random.random() * TAU)
-
         mob1 = RegularPolygon(n=4,radius=1.5,color=PINK).rotate(PI/4)
         mob2 = Triangle(radius=1.5,color=TEAL)
         crbase = Rectangle(height=0.5,width=3)
