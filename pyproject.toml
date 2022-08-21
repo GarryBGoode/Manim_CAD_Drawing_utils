@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "manim-CAD drawing utils"
+name = "manim-CAD_Drawing_Utils"
 version = "0.0.1"
 description = "A collection of utility functions to for creating CAD-like visuals in Manim."
 license = "MIT"

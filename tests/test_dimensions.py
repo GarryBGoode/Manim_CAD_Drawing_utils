@@ -1,6 +1,5 @@
 from manim import *
-from dimensions import *
-from round_corners import *
+from manim_cad_drawing_utils import *
 
 class test_dimension_pointer(Scene):
     def construct(self):

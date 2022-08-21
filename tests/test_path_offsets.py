@@ -1,8 +1,7 @@
 import numpy as np
 from manim import *
-from path_mapper import *
-from round_corners import *
-import copy
+from manim_cad_drawing_utils import *
+
 
 
 class test_offset(Scene):

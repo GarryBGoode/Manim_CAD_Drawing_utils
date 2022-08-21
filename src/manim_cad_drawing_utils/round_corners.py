@@ -3,7 +3,7 @@ from manim import *
 from scipy.optimize import fsolve
 from scipy.optimize import root
 from scipy.optimize import root_scalar
-from utils import angle_between_vectors_signed
+from .utils import angle_between_vectors_signed
 
 __all__ = [
     "round_corner_param",

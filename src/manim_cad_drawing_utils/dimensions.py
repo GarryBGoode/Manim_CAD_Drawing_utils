@@ -1,6 +1,6 @@
 from manim import *
-from utils import angle_between_vectors_signed
-from round_corners import *
+from .utils import angle_between_vectors_signed
+from .round_corners import *
 
 class Pointer_Label_Free(VDict):
     def __init__(self,point, text:str, offset_vector=(RIGHT+DOWN),**kwargs):

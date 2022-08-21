@@ -1,6 +1,5 @@
 from manim import *
-from path_mapper import *
-from round_corners import *
+from manim_cad_drawing_utils import *
 
 class test(Scene):
     def construct(self):

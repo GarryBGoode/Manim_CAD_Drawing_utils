@@ -1,7 +1,7 @@
 import numpy as np
 from manim import *
-from utils import angle_between_vectors_signed
-from round_corners import *
+from .utils import angle_between_vectors_signed
+from .round_corners import *
 
 class Path_mapper(VMobject):
     def __init__(self,path_source:VMobject,num_of_path_points=100,**kwargs):

@@ -1,5 +1,5 @@
 from manim import *
-from round_corners import *
+from manim_cad_drawing_utils import *
 
 class Test_chamfer(Scene):
     def construct(self):
