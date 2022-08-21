@@ -121,7 +121,7 @@ class Dashed_line_mobject(VDict):
                  dash_offset=0.0,**kwargs):
         super().__init__(**kwargs)
         self['path'] = Path_mapper(target_mobject,num_of_path_points=10*target_mobject.get_num_curves())
-        self['path'].add_updater(lambda mob: mob.generate_length_map())
+        # self['path'].add_updater(lambda mob: mob.generate_length_map())
 
         dshgrp = self.generate_dash_mobjects(
             **self.generate_dash_pattern_dash_distributed(num_dashes,dash_ratio = dashed_ratio,offset=dash_offset)

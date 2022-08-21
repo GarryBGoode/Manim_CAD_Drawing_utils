@@ -24,6 +24,7 @@ classifiers= [
 python = ">=3.7,<3.11"
 manim = ">=0.15.2<=1.0"
 scipy = "*"
+bezier = "*"
 
 [tool.poetry.plugins."manim.plugins"]
 "manim_cad_drawing_utils" = "manim_cad_drawing_utils"

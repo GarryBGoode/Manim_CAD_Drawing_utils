@@ -118,3 +118,17 @@ class test_dimension_base(Scene):
 
 ```
 ![cutoff_corners](/media/examples/dimension.png)
+
+## hatching
+
+```py
+class test_hatch(Scene):
+    def construct(self):
+        mob1 = Star().scale(2)
+        hatch1 = Hatch_lines(mob1,angle=PI/6,stroke_width=2)
+        hatch2 = Hatch_lines(mob1,angle=PI/6+PI/2,stroke_width=2)
+        self.add(mob1,hatch1,hatch2)
+
+
+```
+![cutoff_corners](/media/examples/hatches.png)

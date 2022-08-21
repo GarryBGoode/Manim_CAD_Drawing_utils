@@ -7,6 +7,21 @@ optional = false
 python-versions = ">=3.6.0"
 
 [[package]]
+name = "bezier"
+version = "2021.2.12"
+description = "Helper for Bézier Curves, Triangles, and Higher Order Objects"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+importlib-metadata = {version = "*", markers = "python_version < \"3.8\" and platform_system == \"Windows\""}
+numpy = ">=1.20.1"
+
+[package.extras]
+full = ["matplotlib (>=3.3.4)", "scipy (>=1.6.0)", "sympy (>=1.7.1)"]
+
+[[package]]
 name = "certifi"
 version = "2022.6.15"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -508,10 +523,11 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.11"
-content-hash = "8c7df36ce552f3dadd00f7c2405bcaf2a18e9dbba1189531eb40287efe6cd92b"
+content-hash = "396c16f7bbc2e56c2c05574b60db59f44a02318315e25b1382a8ef84578de316"
 
 [metadata.files]
 "backports.cached-property" = []
+bezier = []
 certifi = []
 charset-normalizer = []
 click = [
