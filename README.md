@@ -71,7 +71,7 @@ class Test_chamfer(Scene):
         self.add(mob1,mob2,mob3,mob4)
 
 ```
-![cutoff_corners](/media/examples/round_corners.png)
+![cutoff_corners](/media/examples/cutoff_corners.png)
 
 ## pointer
 
