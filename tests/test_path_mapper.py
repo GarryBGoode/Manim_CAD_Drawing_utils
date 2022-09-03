@@ -3,7 +3,7 @@ from manim_cad_drawing_utils import *
 
 class test_path_mapper_anim(Scene):
     def construct(self):
-        mob1 = round_corners(Triangle(fill_color=TEAL,fill_opacity=0).scale(3),0.5)
+        mob1 = Round_Corners(Triangle(fill_color=TEAL,fill_opacity=0).scale(3),0.5)
         PM = Path_mapper(mob1)
         mob2 = mob1.copy()
         mob1.shift(LEFT * 2.5)
@@ -15,7 +15,7 @@ class test_path_mapper_anim(Scene):
 
 class test_path_mapper_curve(Scene):
     def construct(self):
-        mob1 = round_corners(Triangle().scale(3),0.5)
+        mob1 = Round_Corners(Triangle().scale(3),0.5)
         PM = Path_mapper(mob1)
         vt = ValueTracker(0)
 
@@ -45,6 +45,6 @@ class test_path_mapper_curve(Scene):
         self.wait()
 
 #
-with tempconfig({"quality": "medium_quality", "disable_caching": True}):
-    scene = test_path_mapper_curve()
-    scene.render()
+# with tempconfig({"quality": "medium_quality", "disable_caching": True}):
+#     scene = test_path_mapper_curve()
+#     scene.render()

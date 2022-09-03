@@ -3,7 +3,7 @@ from manim_cad_drawing_utils import *
 
 class test_dimension_pointer(Scene):
     def construct(self):
-        mob1 = round_corners(Triangle().scale(2),0.3)
+        mob1 = Round_Corners(Triangle().scale(2),0.3)
         p = ValueTracker(0)
         dim1 = Pointer_To_Mob(mob1,p.get_value(),r'triangel')
         dim1.add_updater(lambda mob: mob.update_mob(mob1,p.get_value()))
@@ -18,7 +18,7 @@ class test_dimension_pointer(Scene):
 
 class test_dimension_base(Scene):
     def construct(self):
-        mob1 = round_corners(Triangle().scale(2),0.3)
+        mob1 = Round_Corners(Triangle().scale(2),0.3)
         dim1 = Linear_Dimension(mob1.get_critical_point(UP),
                                 mob1.get_critical_point(DOWN),
                                 direction=RIGHT,
@@ -34,7 +34,7 @@ class test_dimension_base(Scene):
 
 class test_dimension(Scene):
     def construct(self):
-        mob1 = round_corners(Triangle().scale(2),0.3)
+        mob1 = Round_Corners(Triangle().scale(2),0.3)
         p = ValueTracker(0)
         dim2 = Linear_Dimension(mob1.point_from_proportion(0),mob1.point_from_proportion(0.2),
                                 direction=UP,

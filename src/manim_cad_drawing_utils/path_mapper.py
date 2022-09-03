@@ -63,14 +63,57 @@ class Path_mapper(VMobject):
          Override original implementation.
          Should be the same, except it uses pre calculated length table and should be faster a bit.
         '''
-        a = self.alpha_from_length(alpha*self.get_path_length())
-        if a==1:
-            index = self.path.get_num_curves()-1
-            remainder = 1
+        if hasattr(alpha, '__iter__'):
+            values = self.alpha_from_length(alpha * self.get_path_length())
+            ret = np.empty((0,3))
+            for a in values:
+                if a == 1:
+                    index = self.path.get_num_curves() - 1
+                    remainder = 1
+                else:
+                    index = int(a * self.path.get_num_curves() // 1)
+                    remainder = (a * self.path.get_num_curves()) % 1
+                p = self.path.get_nth_curve_function(index)(remainder)
+                ret = np.concatenate([ret,np.reshape(p,(1,3))],axis=0)
+            return ret
         else:
-            index = int(a * self.path.get_num_curves() // 1)
-            remainder = (a * self.path.get_num_curves()) % 1
-        return self.path.get_nth_curve_function(index)(remainder)
+            a = self.alpha_from_length(alpha*self.get_path_length())
+            if a==1:
+                index = self.path.get_num_curves()-1
+                remainder = 1
+            else:
+                index = int(a * self.path.get_num_curves() // 1)
+                remainder = (a * self.path.get_num_curves()) % 1
+            return self.path.get_nth_curve_function(index)(remainder)
+
+    def get_length_between_points(self,b,a):
+        '''
+        Signed arc length between to points.
+        :param b: second point
+        :param a: first point
+        :return: length (b-a)
+        '''
+        return self.length_from_alpha(b)-self.length_from_alpha(a)
+
+    def get_length_between_points_wrapped(self,b,a):
+        ''' This function wraps around the length between two points similar to atan2 method.
+        Useful for closed mobjects.
+        Returns distance value between -L/2...L/2 '''
+        AB = self.get_length_between_points(b,a)
+        L = self.get_path_length()
+        return (AB%L-L/2)%L-L/2
+
+    def get_length_between_points_tuple(self,b,a):
+        ''' Function to get the 2 absolute lengths between 2 parameters on closed mobjects.
+        Useful for closed mobjects.
+        :returns tuple (shorter, longer)'''
+
+        AB = abs(self.get_length_between_points(b,a))
+        L = self.get_path_length()
+        if AB>L/2:
+            return (L - AB), AB
+        else:
+            return AB, (L - AB)
 
     def get_bezier_index_from_length(self,s):
         a = self.alpha_from_length(s)
@@ -170,18 +213,20 @@ class Dashed_line_mobject(VDict):
         return VGroup(*ret)
 
 
-class Path_Offset_Mobject(VDict):
-    def __init__(self,target_mobject, ofs_func, num_of_samples=100, **kwargs):
+class Path_Offset_Mobject(VMobject):
+    def __init__(self,target_mobject, ofs_func,ofs_func_kwargs={}, num_of_samples=100, **kwargs):
         super().__init__(**kwargs)
-        self['path'] = Path_mapper(target_mobject)
-        self['path'].add_updater(lambda mob: mob.generate_length_map())
+        self.ofs_func_kwargs = ofs_func_kwargs
+        self.PM = Path_mapper(target_mobject)
+        self.PM.add_updater(lambda mob: mob.generate_length_map())
         self.t_range = np.linspace(0, 1, num_of_samples)
         self.ofs_func = ofs_func
-        self.s_scaling_factor = 1/self['path'].get_path_length()
-        curve1 = self.generate_offset_paths()
-        mobject_curve = VMobject(**kwargs)
-        mobject_curve.points = curve1
-        self['ofs_mobj'] = mobject_curve
+        self.s_scaling_factor = 1/self.PM.get_path_length()
+        self.points = self.generate_offset_paths()
+
+    # this can be useful in lambdas for updaters
+    def set_ofs_function_kwargs(self,ofs_func_kwargs):
+        self.ofs_func_kwargs = ofs_func_kwargs
 
     def generate_bezier_points(self, input_func,t_range, Smoothing=True):
         # generate bezier 4-lets with numerical difference
@@ -207,20 +252,20 @@ class Path_Offset_Mobject(VDict):
 
     def generate_ref_curve(self):
         self.ref_curve = VMobject()
-        bez_point = self.generate_bezier_points(self['path'].point_from_proportion,self.t_range)
+        bez_point = self.generate_bezier_points(self.PM.point_from_proportion,self.t_range)
         for point in bez_point:
             self.ref_curve.append_points(point)
         self.ref_curve_path = Path_mapper(self.ref_curve)
 
     def generate_offset_func_points(self,Smoothing=True):
-        points = self.generate_bezier_points(self.ofs_func,self.t_range,Smoothing=Smoothing)
+        points = self.generate_bezier_points(lambda t: self.ofs_func(t,**self.ofs_func_kwargs),self.t_range,Smoothing=Smoothing)
         return points
 
     def generate_normal_vectors(self):
-        s_range = self.t_range*self['path'].get_path_length()
+        s_range = self.t_range*self.PM.get_path_length()
         # generate normal vectors from tangent angles and turning them 90°
         # the angles can be interpolated with bezier, unit normal vectors would not remain 'unit' under interpolation
-        angles = self.generate_bezier_points(self['path'].get_tangent_angle,s_range)
+        angles = self.generate_bezier_points(self.PM.get_tangent_angle,s_range)
         out = []
         for angle in angles:
             out.append([np.array([-np.sin(a),np.cos(a),0])for a in angle])
@@ -242,9 +287,50 @@ class Path_Offset_Mobject(VDict):
         return self.ref_curve.points + ofs_vectors
 
     def default_updater(self,gen_ofs_point=True, gen_ref_curve=True):
-        self['ofs_mobj'].points = self.generate_offset_paths(gen_ofs_point,gen_ref_curve)
+        self.points = self.generate_offset_paths(gen_ofs_point,gen_ref_curve)
 
 
+class Curve_Warp(VMobject):
+    def __init__(self,warp_source:VMobject,warp_curve:VMobject,anchor_point=0.5, **kwargs):
 
+        self.warp_curve = warp_curve
+        self.warp_source = warp_source
+        self.PM = Path_mapper(self.warp_curve)
+        self.anchor_point = anchor_point
+        super().__init__(**kwargs)
+        self.match_style(warp_source)
 
+    def generate_points(self):
 
+        s0 = self.PM.length_from_alpha(self.anchor_point)
+        x_points = self.warp_source.points[:, 0] + s0
+        y_points = self.warp_source.points[:, 1]
+        L = self.PM.get_path_length()
+
+        if self.warp_curve.is_closed():
+            #if the curve is closed, out-of-bound x values can wrap around to the beginning
+            x_points = x_points % L
+            x_curve_points = self.PM.point_from_proportion(x_points/L)
+            nv = [self.PM.get_normal_unit_vector(x) for x in x_points]
+            y_curve_points = np.array( [tuplie[0] * tuplie[1] for tuplie in zip(nv,y_points)])
+            self.points = x_curve_points + y_curve_points
+        else:
+            self.points = np.empty((0,3))
+            for x,y in zip(x_points,y_points):
+                if 0 < x < L:
+                    p = self.PM.point_from_proportion(x / L) + self.PM.get_normal_unit_vector(x)*y
+                    self.points = np.append(self.points,np.reshape(p,(1,3)),axis=0)
+                elif x>L:
+                    endpoint = self.PM.point_from_proportion(1)
+                    tanv = self.PM.get_tangent_unit_vector(L)
+                    nv = rotate_vector(tanv,PI/2)
+                    x_1 = x-L
+                    p = endpoint + x_1 * tanv + y * nv
+                    self.points = np.append(self.points, np.reshape(p,(1,3)), axis=0)
+                else:
+                    startpoint = self.PM.point_from_proportion(0)
+                    tanv = self.PM.get_tangent_unit_vector(0)
+                    nv = rotate_vector(tanv, PI / 2)
+                    x_1 = x
+                    p = startpoint + x_1 * tanv + y * nv
+                    self.points = np.append(self.points, np.reshape(p, (1, 3)), axis=0)

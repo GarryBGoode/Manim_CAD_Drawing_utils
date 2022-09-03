@@ -13,9 +13,9 @@ class Test_chamfer(Scene):
         mob1.shift(2.5*LEFT)
         mob4.shift(2.5*RIGHT)
 
-        mob1 = chamfer_corners(mob1, 0.25)
-        mob2 = chamfer_corners(mob2,0.25)
-        mob3 = chamfer_corners(mob3, 0.25)
+        mob1 = Chamfer_Corners(mob1, 0.25)
+        mob2 = Chamfer_Corners(mob2,0.25)
+        mob3 = Chamfer_Corners(mob3, 0.25)
         self.add(mob1,mob2,mob3,mob4)
 
 class Test_round(Scene):
@@ -30,9 +30,9 @@ class Test_round(Scene):
         mob1.shift(2.5*LEFT)
         mob4.shift(2.5*RIGHT)
 
-        mob1 = round_corners(mob1, 0.25)
-        mob2 = round_corners(mob2, 0.25)
-        mob3 = round_corners(mob3, 0.25)
+        mob1 = Round_Corners(mob1, 0.25)
+        mob2 = Round_Corners(mob2, 0.25)
+        mob3 = Round_Corners(mob3, 0.25)
         self.add(mob1,mob2,mob3,mob4)
 
 
@@ -43,7 +43,7 @@ class Patrick(Scene):
         mob1.points[1::4,:] = mob1.points[1::4,:]+rotate_vector(UP*(0.4*np.random.random()+0.2),np.random.random()*TAU)
         mob1.points[2::4, :] = mob1.points[2::4, :] + rotate_vector(UP * (0.4*np.random.random()+0.2), np.random.random() * TAU)
 
-        pat = round_corners(mob1,radius=0.35)
+        pat = Round_Corners(mob1,radius=0.35)
         pat.set_fill(color=RED_C,opacity=1)
 
         self.add(pat)

@@ -3,7 +3,7 @@ from manim_cad_drawing_utils import *
 
 class test(Scene):
     def construct(self):
-        mob1 = round_corners(Square().scale(3),radius=0.8).shift(DOWN*0)
+        mob1 = Round_Corners(Square().scale(3),radius=0.8).shift(DOWN*0)
         vt = ValueTracker(0)
         dash1 = Dashed_line_mobject(mob1,num_dashes=36,dashed_ratio=0.5,dash_offset=0)
         def dash_updater(mob):

@@ -6,14 +6,14 @@ from scipy.optimize import root_scalar
 from .utils import angle_between_vectors_signed
 
 __all__ = [
-    "round_corner_param",
-    "round_corners",
-    "chamfer_corner_param",
-    "chamfer_corners"
+    "Round_Corner_Param",
+    "Round_Corners",
+    "Chamfer_Corner_Param",
+    "Chamfer_Corners"
 ]
 
 
-def round_corner_param(radius,curve_points_1,curve_points_2):
+def Round_Corner_Param(radius,curve_points_1,curve_points_2):
     bez_func_1 = bezier(curve_points_1)
     diff_func_1 = bezier((curve_points_1[1:, :] - curve_points_1[:-1, :]) / 3)
     bez_func_2 = bezier(curve_points_2)
@@ -55,7 +55,7 @@ def round_corner_param(radius,curve_points_1,curve_points_2):
     return out_param, k
 
 
-def round_corners(mob:VMobject,radius=0.2):
+def Round_Corners(mob:VMobject,radius=0.2):
     i=0
     while i < mob.get_num_curves() and i<1e5:
         ind1 = i % mob.get_num_curves()
@@ -67,7 +67,7 @@ def round_corners(mob:VMobject,radius=0.2):
         # angle_test = (np.cross(normalize(anchor1),normalize(anchor2)))[2]
         angle_test = angle_between_vectors_signed(handle1,handle2)
         if abs(angle_test)>1E-6:
-            params, k = round_corner_param(radius,curve_1,curve_2)
+            params, k = Round_Corner_Param(radius,curve_1,curve_2)
             cut_curve_points_1 = partial_bezier_points(curve_1, 0, k[0])
             cut_curve_points_2 = partial_bezier_points(curve_2, k[1], 1)
             loc_arc = Arc(**params,num_components=5)
@@ -87,7 +87,7 @@ def round_corners(mob:VMobject,radius=0.2):
 
 
 
-def chamfer_corner_param(offset,curve_points_1,curve_points_2):
+def Chamfer_Corner_Param(offset,curve_points_1,curve_points_2):
     # this is ugly, I know, don't judge
     if hasattr(offset,'iter'):
         ofs = [offset[0], offset[1]]
@@ -117,7 +117,7 @@ def chamfer_corner_param(offset,curve_points_1,curve_points_2):
     return param, [a1,a2]
 
 
-def chamfer_corners(mob:VMobject,offset=0.2):
+def Chamfer_Corners(mob:VMobject,offset=0.2):
     i=0
     while i < mob.get_num_curves() and i<1e5:
         ind1 = i % mob.get_num_curves()
@@ -129,7 +129,7 @@ def chamfer_corners(mob:VMobject,offset=0.2):
         # angle_test = (np.cross(normalize(anchor1),normalize(anchor2)))[2]
         angle_test = angle_between_vectors_signed(handle1,handle2)
         if abs(angle_test)>1E-6:
-            params, k = chamfer_corner_param(offset,curve_1,curve_2)
+            params, k = Chamfer_Corner_Param(offset,curve_1,curve_2)
             cut_curve_points_1 = partial_bezier_points(curve_1, 0, k[0])
             cut_curve_points_2 = partial_bezier_points(curve_2, k[1], 1)
             loc_line = Line(**params)
