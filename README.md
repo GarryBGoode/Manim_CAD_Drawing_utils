@@ -34,7 +34,6 @@ class Test_round(Scene):
     def construct(self):
         mob1 = RegularPolygon(n=4,radius=1.5,color=PINK).rotate(PI/4)
         mob2 = Triangle(radius=1.5,color=TEAL)
-        # making a cross
         crbase = Rectangle(height=0.5,width=3)
         mob3 = Union(crbase.copy().rotate(PI/4),crbase.copy().rotate(-PI/4),color=BLUE)
         mob4 = Circle(radius=1.3)
@@ -43,10 +42,10 @@ class Test_round(Scene):
         mob1.shift(2.5*LEFT)
         mob4.shift(2.5*RIGHT)
 
-        mob1 = round_corners(mob1, 0.25)
-        mob2 = round_corners(mob2, 0.25)
-        mob3 = round_corners(mob3, 0.25)
-        self.add(mob1,mob2,mob3,mob4)
+        mob1 = Round_Corners(mob1, 0.25)
+        mob2 = Round_Corners(mob2, 0.25)
+        mob3 = Round_Corners(mob3, 0.25)
+        self.add(mob1,mob2,mob3,mob4))
 ```
 ![rounded_corners](/media/examples/round_corners.png)
 
@@ -65,9 +64,9 @@ class Test_chamfer(Scene):
         mob1.shift(2.5*LEFT)
         mob4.shift(2.5*RIGHT)
 
-        mob1 = chamfer_corners(mob1, 0.25)
-        mob2 = chamfer_corners(mob2,0.25)
-        mob3 = chamfer_corners(mob3, 0.25)
+        mob1 = Chamfer_Corners(mob1, 0.25)
+        mob2 = Chamfer_Corners(mob2,0.25)
+        mob3 = Chamfer_Corners(mob3, 0.25)
         self.add(mob1,mob2,mob3,mob4)
 
 ```
@@ -78,7 +77,7 @@ class Test_chamfer(Scene):
 ```py
 class test_dimension_pointer(Scene):
     def construct(self):
-        mob1 = round_corners(Triangle().scale(2),0.3)
+        mob1 = Round_Corners(Triangle().scale(2),0.3)
         p = ValueTracker(0)
         dim1 = Pointer_To_Mob(mob1,p.get_value(),r'triangel')
         dim1.add_updater(lambda mob: mob.update_mob(mob1,p.get_value()))
@@ -93,7 +92,7 @@ class test_dimension_pointer(Scene):
 
 
 ```
-![cutoff_corners](/media/examples/pointer_triangel.gif)
+![pointer](/media/examples/pointer_triangel.gif)
 
 
 ## dimension
@@ -101,7 +100,7 @@ class test_dimension_pointer(Scene):
 ```py
 class test_dimension_base(Scene):
     def construct(self):
-        mob1 = round_corners(Triangle().scale(2),0.3)
+        mob1 = Round_Corners(Triangle().scale(2),0.3)
         dim1 = Linear_Dimension(mob1.get_critical_point(UP),
                                 mob1.get_critical_point(DOWN),
                                 direction=RIGHT,
@@ -112,12 +111,11 @@ class test_dimension_base(Scene):
                                 direction=UP,
                                 offset=-3,
                                 color=RED)
-
         self.add(mob1,dim1,dim2)
 
 
 ```
-![cutoff_corners](/media/examples/dimension.png)
+![dimension](/media/examples/dimension.png)
 
 ## hatching
 
@@ -128,7 +126,27 @@ class test_hatch(Scene):
         hatch1 = Hatch_lines(mob1,angle=PI/6,stroke_width=2)
         hatch2 = Hatch_lines(mob1,angle=PI/6+PI/2,stroke_width=2)
         self.add(mob1,hatch1,hatch2)
-
-
 ```
-![cutoff_corners](/media/examples/hatches.png)
+![hatching](/media/examples/hatches.png)
+
+
+## Dashed lines
+```py
+class test_dash(Scene):
+    def construct(self):
+        mob1 = Round_Corners(Square().scale(3),radius=0.8).shift(DOWN*0)
+        vt = ValueTracker(0)
+        dash1 = Dashed_line_mobject(mob1,num_dashes=36,dashed_ratio=0.5,dash_offset=0)
+        def dash_updater(mob):
+            offset = vt.get_value()%1
+            dshgrp = mob.generate_dash_mobjects(
+                **mob.generate_dash_pattern_dash_distributed(36, dash_ratio=0.5, offset=offset)
+            )
+            mob['dashes'].become(dshgrp)
+        dash1.add_updater(dash_updater)
+
+        self.add(dash1)
+        self.play(vt.animate.set_value(2),run_time=6)
+        self.wait(0.5)
+```
+![hatching](/media/examples/dashes.gif)

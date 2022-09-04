@@ -29,13 +29,11 @@ class test_dimension_base(Scene):
                                 direction=UP,
                                 offset=-3,
                                 color=RED)
-
         self.add(mob1,dim1,dim2)
 
 class test_dimension(Scene):
     def construct(self):
         mob1 = Round_Corners(Triangle().scale(2),0.3)
-        p = ValueTracker(0)
         dim2 = Linear_Dimension(mob1.point_from_proportion(0),mob1.point_from_proportion(0.2),
                                 direction=UP,
                                 offset=-0,
