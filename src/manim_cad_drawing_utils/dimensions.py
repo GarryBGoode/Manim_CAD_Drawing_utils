@@ -1,6 +1,7 @@
 from manim import *
 from .utils import angle_between_vectors_signed
 from .round_corners import *
+from .path_mapper import *
 
 class Pointer_Label_Free(VDict):
     def __init__(self,point, text:str, offset_vector=(RIGHT+DOWN),**kwargs):
@@ -8,7 +9,6 @@ class Pointer_Label_Free(VDict):
         if not 'stroke_width' in kwargs:
             kwargs['stroke_width'] = DEFAULT_STROKE_WIDTH
         super().__init__(**kwargs)
-        self.add({'arrow': Arrow(start=point + offset_vector, end=point, buff=0, **kwargs)})
 
         if isinstance(text,str):
             textmob = Text(text,**kwargs)
@@ -17,25 +17,36 @@ class Pointer_Label_Free(VDict):
         else:
             textmob = Text('A',**kwargs)
         self.add({'text': textmob})
-
-
         self.twidth = (self['text'].get_critical_point(RIGHT)-self['text'].get_critical_point(LEFT))[0]
         self.twidth = self.twidth + text_buff * 2
-        self.add({'line':Line(start=point+offset_vector,
-                              end=point+offset_vector+self.twidth*np.sign(offset_vector[0]*RIGHT))})
 
+        # self.add({'arrow': Arrow(start=point + offset_vector, end=point, buff=0, **kwargs)})
+
+        dim_line = VMobject(**kwargs).set_points_as_corners([point,
+                                                             point + offset_vector,
+                                                             point+offset_vector +
+                                                             self.twidth*np.sign(offset_vector[0])*RIGHT])
+        self.add({'line':dim_line})
+        self.add({'arrow':CAD_ArrowHead(self['line'],anchor_point=0,**kwargs)})
+        self['arrow'].arrowhead.rotate(PI,about_point=ORIGIN)
+        self['arrow'].add_updater(self['arrow'].default_updater)
         theight = (self['text'].get_critical_point(UP)-self['text'].get_critical_point(DOWN))[1]
-        self['text'].move_to(self['line'].get_center()+UP*theight*0.75)
+        self['text'].move_to(self['line'].points[3,:]+UP*theight*0.75,aligned_edge=LEFT*np.sign(offset_vector[0]))
 
 
     def update_point(self, point, offset_vector=(RIGHT+DOWN)):
-        self['arrow'].put_start_and_end_on(start=point+offset_vector, end=point)
-        self['line'].put_start_and_end_on(start=point+offset_vector,
-                                          end=point + offset_vector + self.twidth * np.sign(offset_vector[0] * RIGHT))
+        # self['arrow'].put_start_and_end_on(start=point+offset_vector, end=point)
+        # self['line'].put_start_and_end_on(start=point+offset_vector,
+        #                                   end=point + offset_vector + self.twidth * np.sign(offset_vector[0] * RIGHT))
         # self['arrow'].add_tip(self['arrow'].start_tip, at_start=True)
 
+        self['line'].set_points_as_corners([point,
+                                            point + offset_vector,
+                                            point + offset_vector +
+                                            self.twidth * np.sign(offset_vector[0]) * RIGHT])
+
         theight = (self['text'].get_critical_point(UP)-self['text'].get_critical_point(DOWN))[1]
-        self['text'].move_to(self['line'].get_center()+UP*theight*0.75)
+        self['text'].move_to(self['line'].points[3,:]+UP*theight*0.75,aligned_edge=LEFT*np.sign(offset_vector[0]))
 
 
 class Pointer_To_Mob(Pointer_Label_Free):
@@ -85,34 +96,24 @@ class Linear_Dimension(VDict):
         tip_len=0.2
 
         if not outside_arrow:
-            main_line = Arrow(start=startpoint, end=endpoint, buff=0,
-                              max_tip_length_to_length_ratio=1,
-                              max_stroke_width_to_length_ratio=1000,
-                              tip_length=tip_len,
-                              **kwargs)
-            main_line.add_tip(at_start=True,tip_length=tip_len)
-        else:
             main_line = Line(start=startpoint, end=endpoint,**kwargs)
-            arrow_line1 = Arrow(end=startpoint,
-                                start=startpoint+tip_len*3*(normalize(startpoint-endpoint)),
-                                buff=0,
-                                max_tip_length_to_length_ratio=1,
-                                max_stroke_width_to_length_ratio=1000,
-                                tip_length=tip_len,
-                                **kwargs
-                               )
-            arrow_line2 = Arrow(end=endpoint,
-                                start=endpoint-tip_len*3*(normalize(startpoint-endpoint)),
-                                buff=0,
-                                max_tip_length_to_length_ratio=1,
-                                max_stroke_width_to_length_ratio=1000,
-                                tip_length=tip_len,
-                                **kwargs
-                               )
-            main_line.add(arrow_line1)
-            main_line.add(arrow_line2)
+            arrow1 = CAD_ArrowHead(main_line,anchor_point=1, arrow_size=tip_len, reversed_arrow=False)
+            arrow2 = CAD_ArrowHead(main_line, anchor_point=0, arrow_size=tip_len, reversed_arrow=True)
+        else:
+            extension = tip_len*3*(normalize(endpoint-startpoint))
+            main_line = Line(start=startpoint-extension,
+                             end=endpoint+extension,
+                             **kwargs)
+            arrow1 = CAD_ArrowHead(main_line, anchor_point=1, arrow_size=tip_len, reversed_arrow=True)
+            arrow1.arrowhead.shift(extension*RIGHT)
+            arrow1.default_updater(0)
+            arrow2 = CAD_ArrowHead(main_line, anchor_point=0, arrow_size=tip_len, reversed_arrow=False)
+            arrow2.arrowhead.shift(-extension * RIGHT)
+            arrow2.default_updater(0)
 
         self.add({'main_line': main_line})
+        self.add({'arrow1': arrow1})
+        self.add({'arrow2': arrow2})
         self.add({'ext_line_1': Line(start=start,
                                      end=startpoint + 0.25 * (normalize(startpoint-start)),
                                      **kwargs)})
@@ -137,7 +138,7 @@ class Linear_Dimension(VDict):
         self.add({'text': textmob})
 
 
-class Angle_Dimension_3point(VGroup):
+class Angle_Dimension_3point(VDict):
     def __init__(self,start,end, arc_center,offset=2,text=None, outside_arrow=False,**kwargs):
         super().__init__(**kwargs)
         if not 'stroke_width' in kwargs:
@@ -164,36 +165,55 @@ class Angle_Dimension_3point(VGroup):
                      end=arc_p1 + normalize(arc_p1-end)*tip_len,
                      **kwargs
                      )
-        self.add(line1,line2)
-
+        # self.add(line1,line2)
+        self.add({'ext_line_1': line1})
+        self.add({'ext_line_2': line2})
         if not outside_arrow:
 
-            base_arc.add_tip(tip_length=tip_len)
-            base_arc.add_tip(tip_length=tip_len,at_start=True)
-            self.add(base_arc)
+            # base_arc.add_tip(tip_length=tip_len)
+            # base_arc.add_tip(tip_length=tip_len,at_start=True)
+            arrow1 = CAD_ArrowHead(base_arc, anchor_point=1,reversed_arrow=False)
+            arrow2 = CAD_ArrowHead(base_arc, anchor_point=0, reversed_arrow=True)
+            self.add({'base_arc':base_arc})
+            self.add({'arrow_1':arrow1})
+            self.add({'arrow_2': arrow2})
         else:
-            angle_ext = tip_len*3/radius * np.sign(angle_1)
-            ext_arc_1 = Arc(radius=radius,
-                            start_angle=angle_0-angle_ext,
-                            angle=+angle_ext,
-                            arc_center=arc_center,
-                            **kwargs)
-            ext_arc_2 = Arc(radius=radius,
-                            start_angle=(angle_0 + angle_1 + angle_ext)%TAU,
-                            angle=-angle_ext,
-                            arc_center=arc_center,
-                            **kwargs)
-            ext_arc_1.add_tip(tip_length=tip_len)
-            ext_arc_2.add_tip(tip_length=tip_len)
-            base_arc.add(ext_arc_1,ext_arc_2)
-            self.add(base_arc)
+            extension = tip_len*3 * np.sign(angle_1)
+            angle_ext = extension/radius
+            # ext_arc_1 = Arc(radius=radius,
+            #                 start_angle=angle_0-angle_ext,
+            #                 angle=+angle_ext,
+            #                 arc_center=arc_center,
+            #                 **kwargs)
+            # ext_arc_2 = Arc(radius=radius,
+            #                 start_angle=(angle_0 + angle_1 + angle_ext)%TAU,
+            #                 angle=-angle_ext,
+            #                 arc_center=arc_center,
+            #                 **kwargs)
+            # ext_arc_1.add_tip(tip_length=tip_len)
+            # ext_arc_2.add_tip(tip_length=tip_len)
+            # base_arc.add(ext_arc_1,ext_arc_2)
+            base_arc = Arc(radius=radius,
+                           start_angle=angle_0-angle_ext,
+                           angle=+self.angle + angle_ext * 2,
+                           arc_center=arc_center,
+                           **kwargs)
+            arrow1 = CAD_ArrowHead(base_arc, anchor_point=1, arrow_size=tip_len, reversed_arrow=True)
+            arrow1.arrowhead.shift(extension * RIGHT)
+            arrow1.default_updater(0)
+            arrow2 = CAD_ArrowHead(base_arc, anchor_point=0, arrow_size=tip_len, reversed_arrow=False)
+            arrow2.arrowhead.shift(-extension * RIGHT)
+            arrow2.default_updater(0)
+            self.add({'base_arc': base_arc})
+            self.add({'arrow_1': arrow1})
+            self.add({'arrow_2': arrow2})
 
         if isinstance(text,str):
             textmob = Text(text)
         elif isinstance(text,Mobject):
             textmob = text
         else:
-            textmob = Text(f"{abs(angle_1/DEGREES):.2f}",**kwargs)
+            textmob = Text(f"{abs(angle_1/DEGREES):.0f}",**kwargs)
 
         pos_text = base_arc.point_from_proportion(0.5)
         angle_text = (angle_of_vector(base_arc.point_from_proportion(0.5+1e-6) -
@@ -203,10 +223,61 @@ class Angle_Dimension_3point(VGroup):
         self.text_h = textmob.height
         textmob.rotate(angle_text)
         textmob.move_to(pos_text + rotate_vector(UP,angle_text)*self.text_h)
-        self.add(textmob)
+        self.add({'text': textmob})
 
 
 
+class CAD_ArrowHead(Curve_Warp):
+    def __init__(self,
+                 target_curve: VMobject,
+                 anchor_point=1,
+                 arrow_size=DEFAULT_ARROW_TIP_LENGTH,
+                 reversed_arrow=False,
+                 **kwargs):
+
+        # set default value
+        self.__reversed_arrow = False
+        self.arrowhead = VMobject()
+        self.arrowhead.set_points_as_corners([(LEFT*2+UP),
+                                              ORIGIN,
+                                              LEFT*2+DOWN])
 
 
+        # set input value
+        self.reversed_arrow = reversed_arrow
+        self.set_arrow_size(arrow_size)
+        self.arrowhead.match_style(target_curve)
 
+        super().__init__(self.arrowhead,target_curve,anchor_point=anchor_point,**kwargs)
+
+
+    def default_updater(self,mob):
+        self.PM.generate_length_map()
+        self.generate_points()
+
+    def get_tip_pos(self):
+        ''' By convention, the tip of the arrow should be the right-most point of the shape, unless it's reversed'''
+        if self.__reversed_arrow:
+            return self.arrowhead.get_critical_point(LEFT)[0]
+        else:
+            return self.arrowhead.get_critical_point(RIGHT)[0]
+
+    def set_arrow_size(self,arrow_size):
+        act_size = (self.arrowhead.get_critical_point(RIGHT)-self.arrowhead.get_critical_point(LEFT))[0]
+        if act_size!=0:
+            self.arrowhead.shift(-self.get_tip_pos()*RIGHT)
+            self.arrowhead.points *= arrow_size/act_size
+            self.arrowhead.shift(+self.get_tip_pos() * RIGHT)
+
+    def flip_arrow(self):
+        self.arrowhead.flip()
+
+    @property
+    def reversed_arrow(self):
+        return self.__reversed_arrow
+
+    @reversed_arrow.setter
+    def reversed_arrow(self, rev):
+        if rev != self.__reversed_arrow:
+            self.flip_arrow()
+        self.__reversed_arrow = rev

@@ -69,15 +69,9 @@ class test_bulge(Scene):
         bulge.add_updater(bulge_updater)
 
 
-        debugdots = VGroup(*[Circle(arc_center=ofspath.points[p,:],radius=0.01,
-                                    stroke_opacity=0,fill_opacity=1,fill_color=TEAL) for p in range((ofspath.points.shape)[0])])
-        debugdots.set_color(TEAL)
-        def asdasd(mob):
-            for p in range((ofspath2.points.shape)[0]):
-                mob.submobjects[p].move_to(ofspath2.points[p, :])
-
-        debugdots.add_updater(asdasd)
-
+        debugdots = Bezier_Handlebars(ofspath)
+        debugdots.add_updater(lambda mob: mob.move_circles())
+        debugdots.add_updater(lambda mob: mob.move_lines())
         self.add(ofspath,ofspath2,bulge)
         # mob1.set_stroke(opacity=0)
         self.play(vt.animate.set_value(0.5),run_time=6)

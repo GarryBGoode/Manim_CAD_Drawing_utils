@@ -28,6 +28,7 @@ class test_dimension_base(Scene):
                                 mob1.get_critical_point(LEFT),
                                 direction=UP,
                                 offset=-3,
+                                outside_arrow=True,
                                 color=RED)
         self.add(mob1,dim1,dim2)
 
@@ -51,11 +52,24 @@ class test_angle(Scene):
         dim3 = Angle_Dimension_3point(mob1.get_nth_curve_points(1)[0],
                                       mob1.get_nth_curve_points(0)[0],
                                       mob1.get_nth_curve_points(2)[0],
-                                      offset=-1.5,
+                                      offset=1.5,
                                       outside_arrow=True,
                                       color=RED)
-        self.add(mob1,dim3)
+        dbg = Bezier_Handlebars(dim3['arrow_1'])
+        self.add(mob1,dim3,dbg)
 
+class test_arrow(Scene):
+    def construct(self):
+        mob1 = Round_Corners(Triangle().scale(2), 0.3)
+        # mob1 = Triangle().scale(2)
+        arrow = CAD_ArrowHead(mob1)
+        vt = ValueTracker(0)
+        arrow.add_updater(lambda mob: mob.set(anchor_point=vt.get_value()))
+        arrow.add_updater(arrow.default_updater)
+        PM = Path_mapper(mob1)
+        self.add(mob1,arrow)
+        self.play(vt.animate.set_value(1),run_time=6, rate_func=PM.equalize_rate_func(rate_functions.linear))
+#
 # with tempconfig({"quality": "medium_quality", "disable_caching": True}):
-#     scene = test_dimension()
+#     scene = test_angle()
 #     scene.render()

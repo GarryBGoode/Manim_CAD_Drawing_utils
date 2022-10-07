@@ -17,3 +17,15 @@ class test(Scene):
         self.add(dash1)
         self.play(vt.animate.set_value(2),run_time=6)
         self.wait(0.5)
+
+class test_ddot(Scene):
+    def construct(self):
+        # mob1 = ParametricFunction(lambda t: [t,np.sin(t),0], t_range=[-PI,PI],stroke_opacity=0.3)
+        # mob1 = Circle(stroke_opacity=1)
+        mob1 = Line(LEFT*6,RIGHT*6)
+        dash2 = DashDot_mobject(mob1)
+        self.add(dash2)
+
+# with tempconfig({"quality": "medium_quality", "disable_caching": True}):
+#     scene = test_ddot()
+#     scene.render()

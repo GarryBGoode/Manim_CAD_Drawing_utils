@@ -18,6 +18,46 @@ class Path_mapper(VMobject):
         self.pathdata_lengths  = np.cumsum(norms)
         self.pathdata_alpha = np.linspace(0, 1, self.pathdata_lengths.size)
 
+    def cubic_to_quads(self, cubic_points):
+        # based on https://ttnghia.github.io/pdf/QuadraticApproximation.pdf
+        q_points = np.empty((0,3))
+        gamma = 0.5
+        q1 = cubic_points[0,:] + 3/2*gamma * (cubic_points[1,:]-cubic_points[0,:])
+        q3 = cubic_points[3,:] + 3/2*(1-gamma) * (cubic_points[2,:]-cubic_points[3,:])
+        q2 = (1-gamma)*q1 + gamma * q3
+        q0 = cubic_points[0,:]
+        q4 = cubic_points[3,:]
+        q_points = np.append(q_points,(q0,q1,q2,q2,q3,q4),axis=0)
+        return q_points
+
+    def calc_len_bezier_quad(self,points):
+        a = points[0, :]
+        b = points[1, :]
+        c = points[2, :]
+
+        B = b-a
+        F = c-b
+        A = F-B
+        nF = np.linalg.norm(F)
+        nA = np.linalg.norm(A)
+        nB = np.linalg.norm(B)
+        if nA>1e-8:
+            L = (nF * np.dot(A, F) - nB * np.dot(A, B)) / (nA ** 2) + (nA ** 2 * nB ** 2 - np.dot(A, B) ** 2) / \
+                (nA ** 3) * (np.log(nA * nF + np.dot(A, F)) - np.log(nA * nB + np.dot(A, B)))
+            return L
+        else:
+            return np.linalg.norm(a-c)
+
+    def calc_len_with_quads(self):
+        L = 0
+        for k in range(self.path.get_num_curves()):
+            points = self.path.get_nth_curve_points(k)
+            quads = self.cubic_to_quads(points)
+            L0 = self.calc_len_bezier_quad(quads[:3, :])
+            L1 = self.calc_len_bezier_quad(quads[3:, :])
+            L += L0+L1
+        return L
+
     def get_path_length(self):
         return self.pathdata_lengths[-1]
 
@@ -161,21 +201,23 @@ class Dashed_line_mobject(VDict):
     def __init__(self,target_mobject:VMobject,
                  num_dashes=15,
                  dashed_ratio=0.5,
-                 dash_offset=0.0,**kwargs):
+                 dash_offset=0.0,
+                 **kwargs):
         super().__init__(**kwargs)
-        self['path'] = Path_mapper(target_mobject,num_of_path_points=10*target_mobject.get_num_curves())
-        # self['path'].add_updater(lambda mob: mob.generate_length_map())
+        self.path = Path_mapper(target_mobject,num_of_path_points=10*target_mobject.get_num_curves())
+        # self.path.add_updater(lambda mob: mob.generate_length_map())
 
         dshgrp = self.generate_dash_mobjects(
             **self.generate_dash_pattern_dash_distributed(num_dashes,dash_ratio = dashed_ratio,offset=dash_offset)
         )
         self.add({'dashes':dshgrp})
+        self['dashes'].match_style(target_mobject)
 
     def generate_dash_pattern_metric(self,dash_len,space_len, num_dashes, offset=0):
         ''' generate dash pattern in metric curve-length space'''
         period = dash_len + space_len
         n = num_dashes
-        full_len = self['path'].get_path_length()
+        full_len = self.path.get_path_length()
         dash_starts = [(i * period + offset) for i in range(n)]
         dash_ends = [(i * period + dash_len + offset) for i in range(n)]
         k=0
@@ -194,7 +236,7 @@ class Dashed_line_mobject(VDict):
         return {'dash_starts':dash_starts,'dash_ends':dash_ends}
 
     def generate_dash_pattern_dash_distributed(self,num_dashes,dash_ratio = 0.5,offset=0.0):
-        full_len = self['path'].get_path_length()
+        full_len = self.path.get_path_length()
         period = full_len / num_dashes
         dash_len = period * dash_ratio
         space_len = period * (1-dash_ratio)
@@ -203,14 +245,48 @@ class Dashed_line_mobject(VDict):
         return self.generate_dash_pattern_metric(dash_len, space_len, n, offset=(offset-1)*period)
 
     def generate_dash_mobjects(self,dash_starts=[0],dash_ends=[1]):
-        ref_mob = self['path'].path
-        a_list = self['path'].alpha_from_length(dash_starts)
-        b_list = self['path'].alpha_from_length(dash_ends)
+        ref_mob = self.path.path
+        a_list = self.path.alpha_from_length(dash_starts)
+        b_list = self.path.alpha_from_length(dash_ends)
         ret=[]
         for i in range(len(dash_starts)):
             mobcopy = VMobject().match_points(ref_mob)
             ret.append(mobcopy.pointwise_become_partial(mobcopy,a_list[i],b_list[i]))
         return VGroup(*ret)
+
+
+class DashDot_mobject(Dashed_line_mobject):
+    def __init__(self,
+                 target_mobject: VMobject,
+                 num_dashes=15,
+                 dashed_ratio=0.35,
+                 dash_offset=0.0,
+                 **kwargs):
+        super().__init__(target_mobject,
+                         num_dashes,
+                         dashed_ratio,
+                         dash_offset,
+                         **kwargs)
+        dot = Circle(radius=target_mobject.get_stroke_width()/100,
+                     fill_opacity=1,
+                     stroke_opacity=0,
+                     num_components=6,
+                     fill_color=target_mobject.get_stroke_color())
+        dash_marks = self.generate_dash_pattern_dash_distributed(num_dashes,dashed_ratio,dash_offset)
+
+        full_len = self.path.get_path_length()
+        if dash_marks['dash_starts'][0]<dash_marks['dash_ends'][0]:
+            dot_marks = np.array((np.array(dash_marks['dash_starts'])[1:] + np.array(dash_marks['dash_ends'])[:-1])) / 2
+        else:
+            dot_marks = np.array((np.array(dash_marks['dash_starts']) + np.array(dash_marks['dash_ends']))) / 2
+
+
+        dot_marks = dot_marks%full_len
+        dots=VGroup(*[dot.copy().move_to(self.path.point_from_proportion(m / full_len)) for m in dot_marks])
+        self['dots']=dots
+
+
+
 
 
 class Path_Offset_Mobject(VMobject):
@@ -317,7 +393,7 @@ class Curve_Warp(VMobject):
         else:
             self.points = np.empty((0,3))
             for x,y in zip(x_points,y_points):
-                if 0 < x < L:
+                if 0 < x <= L:
                     p = self.PM.point_from_proportion(x / L) + self.PM.get_normal_unit_vector(x)*y
                     self.points = np.append(self.points,np.reshape(p,(1,3)),axis=0)
                 elif x>L:

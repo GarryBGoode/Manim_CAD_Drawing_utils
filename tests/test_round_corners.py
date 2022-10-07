@@ -46,4 +46,5 @@ class Patrick(Scene):
         pat = Round_Corners(mob1,radius=0.35)
         pat.set_fill(color=RED_C,opacity=1)
 
+
         self.add(pat)
