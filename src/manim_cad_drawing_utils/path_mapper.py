@@ -261,13 +261,14 @@ class DashDot_mobject(Dashed_line_mobject):
                  num_dashes=15,
                  dashed_ratio=0.35,
                  dash_offset=0.0,
+                 dot_scale=1,
                  **kwargs):
         super().__init__(target_mobject,
                          num_dashes,
                          dashed_ratio,
                          dash_offset,
                          **kwargs)
-        dot = Circle(radius=target_mobject.get_stroke_width()/100,
+        dot = Circle(radius=target_mobject.get_stroke_width()/100*dot_scale,
                      fill_opacity=1,
                      stroke_opacity=0,
                      num_components=6,
@@ -290,12 +291,24 @@ class DashDot_mobject(Dashed_line_mobject):
 
 
 class Path_Offset_Mobject(VMobject):
-    def __init__(self,target_mobject, ofs_func,ofs_func_kwargs={}, num_of_samples=100, **kwargs):
+    def __init__(self,
+                 target_mobject,
+                 ofs_func,
+                 ofs_func_kwargs={},
+                 num_of_samples=100,
+                 discontinuities=[],
+                 **kwargs):
         super().__init__(**kwargs)
         self.ofs_func_kwargs = ofs_func_kwargs
         self.PM = Path_mapper(target_mobject)
         self.PM.add_updater(lambda mob: mob.generate_length_map())
+        self.discontinuities = discontinuities
+
         self.t_range = np.linspace(0, 1, num_of_samples)
+        if discontinuities:
+            t_disc = np.sort(
+                np.concatenate((np.array(self.discontinuities) + 1e-7, np.array(self.discontinuities) - 1e-7)))
+            self.t_range=np.sort(np.concatenate((self.t_range,t_disc)))
         self.ofs_func = ofs_func
         self.s_scaling_factor = 1/self.PM.get_path_length()
         self.points = self.generate_offset_paths()

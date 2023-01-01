@@ -86,6 +86,21 @@ class test_bulge(Scene):
         self.play(vt.animate.set_value(0), run_time=6)
         self.wait(0.5)
 
+class test_sq_wave(Scene):
+    def construct(self):
+        # mob1 = Round_Corners(Square().scale(5), radius=1).shift(DOWN * 2)
+        mob1 = Circle(1).scale(5).shift(DOWN * 2)
+
+        def ofs_func(t):
+            if t%0.05>0.025:
+                return 0.4
+            else:
+                return 0
+
+        ofspath = Path_Offset_Mobject(mob1, ofs_func, discontinuities=[z*0.025 for z in range(int(1/0.025))])
+        dbg = Bezier_Handlebars(ofspath)
+        self.add(ofspath,dbg)
+
 class Test_warp(Scene):
     def construct(self):
         mob = Triangle(fill_opacity=1,fill_color=TEAL).scale(0.2).rotate(-PI/2).move_to(ORIGIN)
@@ -112,5 +127,5 @@ class Test_warp(Scene):
 
 
 # with tempconfig({"quality": "medium_quality", "disable_caching": True}):
-#     scene = Test_warp()
+#     scene = test_sq_wave()
 #     scene.render()
