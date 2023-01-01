@@ -27,6 +27,91 @@ from manim_cad_drawing_utils import *
 
 # Examples
 
+## pointer
+
+```py
+class test_dimension_pointer(Scene):
+    def construct(self):
+        mob1 = Round_Corners(Triangle().scale(2),0.3)
+        p = ValueTracker(0)
+        dim1 = Pointer_To_Mob(mob1,p.get_value(),r'triangel', pointer_offset=0.2)
+        dim1.add_updater(lambda mob: mob.update_mob(mob1,p.get_value()))
+        dim1.update()
+        PM = Path_mapper(mob1)
+        self.play(Create(mob1),rate_func=PM.equalize_rate_func(smooth))
+        self.play(Create(dim1))
+        self.play(p.animate.set_value(1),run_time=10)
+        self.play(Uncreate(mob1,rate_func=PM.equalize_rate_func(smooth)))
+        self.play(Uncreate(dim1))
+        self.wait()
+
+
+```
+![pointer](/media/examples/pointer_triangel.gif)
+
+
+## dimension
+
+```py
+class test_dimension(Scene):
+    def construct(self):
+        mob1 = Round_Corners(Triangle().scale(2),0.3)
+        dim1 = Angle_Dimension_Mob(mob1,
+                                   0.2,
+                                   0.6,
+                                   offset=-4,
+                                   ext_line_offset=1,
+                                   color=RED)
+        dim2 = Linear_Dimension(mob1.get_critical_point(RIGHT),
+                                mob1.get_critical_point(LEFT),
+                                direction=UP,
+                                offset=2.5,
+                                outside_arrow=True,
+                                ext_line_offset=-1,
+                                color=RED)
+        self.play(Create(mob1))
+        self.play(Create(dim1), run_time=3)
+        self.play(Create(dim2), run_time=3)
+        self.wait(3)
+        self.play(Uncreate(mob1), Uncreate(dim2))
+
+```
+![dimension](/media/examples/test_dimension.gif)
+
+## hatching
+
+```py
+class test_hatch(Scene):
+    def construct(self):
+        mob1 = Star().scale(2)
+        hatch1 = Hatch_lines(mob1,angle=PI/6,stroke_width=2)
+        hatch2 = Hatch_lines(mob1,angle=PI/6+PI/2,stroke_width=2)
+        self.add(mob1,hatch1,hatch2)
+```
+![hatching](/media/examples/hatches.png)
+
+
+## Dashed lines
+```py
+class test_dash(Scene):
+    def construct(self):
+        mob1 = Round_Corners(Square().scale(3),radius=0.8).shift(DOWN*0)
+        vt = ValueTracker(0)
+        dash1 = Dashed_line_mobject(mob1,num_dashes=36,dashed_ratio=0.5,dash_offset=0)
+        def dash_updater(mob):
+            offset = vt.get_value()%1
+            dshgrp = mob.generate_dash_mobjects(
+                **mob.generate_dash_pattern_dash_distributed(36, dash_ratio=0.5, offset=offset)
+            )
+            mob['dashes'].become(dshgrp)
+        dash1.add_updater(dash_updater)
+
+        self.add(dash1)
+        self.play(vt.animate.set_value(2),run_time=6)
+        self.wait(0.5)
+```
+![hatching](/media/examples/dashes.gif)
+
 ## rounded corners 
 
 ```py
@@ -71,82 +156,3 @@ class Test_chamfer(Scene):
 
 ```
 ![cutoff_corners](/media/examples/cutoff_corners.png)
-
-## pointer
-
-```py
-class test_dimension_pointer(Scene):
-    def construct(self):
-        mob1 = Round_Corners(Triangle().scale(2),0.3)
-        p = ValueTracker(0)
-        dim1 = Pointer_To_Mob(mob1,p.get_value(),r'triangel')
-        dim1.add_updater(lambda mob: mob.update_mob(mob1,p.get_value()))
-        dim1.update()
-        PM = Path_mapper(mob1)
-        self.play(Create(mob1),rate_func=PM.equalize_rate_func(smooth))
-        self.play(Create(dim1))
-        self.play(p.animate.set_value(1),run_time=10)
-        self.play(Uncreate(mob1,rate_func=PM.equalize_rate_func(smooth)))
-        self.play(Uncreate(dim1))
-        self.wait()
-
-
-```
-![pointer](/media/examples/pointer_triangel.gif)
-
-
-## dimension
-
-```py
-class test_dimension_base(Scene):
-    def construct(self):
-        mob1 = Round_Corners(Triangle().scale(2),0.3)
-        dim1 = Linear_Dimension(mob1.get_critical_point(UP),
-                                mob1.get_critical_point(DOWN),
-                                direction=RIGHT,
-                                offset=3,
-                                color=RED)
-        dim2 = Linear_Dimension(mob1.get_critical_point(RIGHT),
-                                mob1.get_critical_point(LEFT),
-                                direction=UP,
-                                offset=-3,
-                                color=RED)
-        self.add(mob1,dim1,dim2)
-
-
-```
-![dimension](/media/examples/dimension.png)
-
-## hatching
-
-```py
-class test_hatch(Scene):
-    def construct(self):
-        mob1 = Star().scale(2)
-        hatch1 = Hatch_lines(mob1,angle=PI/6,stroke_width=2)
-        hatch2 = Hatch_lines(mob1,angle=PI/6+PI/2,stroke_width=2)
-        self.add(mob1,hatch1,hatch2)
-```
-![hatching](/media/examples/hatches.png)
-
-
-## Dashed lines
-```py
-class test_dash(Scene):
-    def construct(self):
-        mob1 = Round_Corners(Square().scale(3),radius=0.8).shift(DOWN*0)
-        vt = ValueTracker(0)
-        dash1 = Dashed_line_mobject(mob1,num_dashes=36,dashed_ratio=0.5,dash_offset=0)
-        def dash_updater(mob):
-            offset = vt.get_value()%1
-            dshgrp = mob.generate_dash_mobjects(
-                **mob.generate_dash_pattern_dash_distributed(36, dash_ratio=0.5, offset=offset)
-            )
-            mob['dashes'].become(dshgrp)
-        dash1.add_updater(dash_updater)
-
-        self.add(dash1)
-        self.play(vt.animate.set_value(2),run_time=6)
-        self.wait(0.5)
-```
-![hatching](/media/examples/dashes.gif)

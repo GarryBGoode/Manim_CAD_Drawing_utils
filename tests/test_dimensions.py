@@ -40,25 +40,34 @@ class test_dimension_base(Scene):
 class test_dimension(Scene):
     def construct(self):
         mob1 = Round_Corners(Triangle().scale(2),0.3)
-        dim2 = Linear_Dimension(mob1.point_from_proportion(0),mob1.point_from_proportion(0.2),
+        dim1 = Angle_Dimension_Mob(mob1,
+                                   0.2,
+                                   0.6,
+                                   offset=-4,
+                                   ext_line_offset=1,
+                                   color=RED)
+        dim2 = Linear_Dimension(mob1.get_critical_point(RIGHT),
+                                mob1.get_critical_point(LEFT),
                                 direction=UP,
-                                offset=1,
+                                offset=2.5,
+                                outside_arrow=True,
+                                ext_line_offset=-1,
                                 color=RED)
-
         self.play(Create(mob1))
-        self.play(Create(dim2),run_time=5)
-        self.wait(2)
-        # self.play(Uncreate(mob1), Uncreate(dim2))
+        self.play(Create(dim1), run_time=3)
+        self.play(Create(dim2), run_time=3)
+        self.wait(3)
+        self.play(Uncreate(mob1), Uncreate(dim2))
 
 class test_angle(Scene):
     def construct(self):
         mob1 = Triangle().scale(2)
-        dim2 = Angle_Dimension_3point(mob1.get_nth_curve_points(2)[0],
-                                      mob1.get_nth_curve_points(1)[0],
+        dim2 = Angle_Dimension_3point(mob1.get_nth_curve_points(1)[0],
                                       mob1.get_nth_curve_points(0)[0],
-                                      offset=2,
+                                      mob1.get_nth_curve_points(2)[0],
+                                      offset=-6,
                                       outside_arrow=False,
-                                      ext_line_offset=-2,
+                                      ext_line_offset=3,
                                       color=RED)
         dim3 = Angle_Dimension_3point(mob1.get_nth_curve_points(1)[0],
                                       mob1.get_nth_curve_points(0)[0],
@@ -67,8 +76,7 @@ class test_angle(Scene):
                                       outside_arrow=True,
                                       ext_line_offset=0.2,
                                       color=RED)
-        dbg = Bezier_Handlebars(dim3['arrow_1'])
-        self.add(mob1,dim2,dim3,dbg)
+        self.add(mob1,dim2,dim3)
 
 class test_arrow(Scene):
     def construct(self):

@@ -204,6 +204,7 @@ class Angle_Dimension_3point(VDict):
                  tip_len=DEFAULT_ARROW_TIP_LENGTH,
                  **kwargs):
         super().__init__(**kwargs)
+
         if not 'stroke_width' in kwargs:
             kwargs['stroke_width'] = DEFAULT_STROKE_WIDTH
 
@@ -268,10 +269,12 @@ class Angle_Dimension_3point(VDict):
 
         if isinstance(text,str):
             textmob = Text(text,**kwargs)
+            textmob.set_stroke(opacity=0)
         elif isinstance(text,Mobject):
             textmob = text
         else:
-            textmob = Text(f"{abs(angle_1/DEGREES):.0f}°",**kwargs)
+            textmob = Text(f"{abs(angle_1/DEGREES):.0f}°", **kwargs)
+            textmob.set_stroke(opacity=0)
 
         pos_text = base_arc.point_from_proportion(0.5)
         angle_text = (angle_of_vector(base_arc.point_from_proportion(0.5+1e-6) -
@@ -283,7 +286,27 @@ class Angle_Dimension_3point(VDict):
         textmob.move_to(pos_text + rotate_vector(UP,angle_text)*self.text_h)
         self.add({'text': textmob})
 
-
+class Angle_Dimension_Mob(Angle_Dimension_3point):
+    def __init__(self,
+                 Mob: Mobject,
+                 start_proportion,
+                 end_proportion,
+                 **kwargs):
+        start = Mob.point_from_proportion(start_proportion)
+        end = Mob.point_from_proportion(end_proportion)
+        start_diff_points = np.clip(np.array([start_proportion+1e-6,start_proportion-1e-6]),0,1)
+        end_diff_points = np.clip(np.array([end_proportion + 1e-6, end_proportion - 1e-6]),0,1)
+        v_start = normalize(Mob.point_from_proportion(start_diff_points[1])-Mob.point_from_proportion(start_diff_points[0]))
+        v_end = normalize(Mob.point_from_proportion(end_diff_points[1])-Mob.point_from_proportion(end_diff_points[0]))
+        v_mat = np.concatenate((np.reshape(v_start[0:2], (2,1)),np.reshape(-v_end[0:2], (2, 1))),axis=1)
+        dP = end-start
+        k = np.linalg.solve(v_mat,dP[0:2])
+        center = start+k[0]*v_start
+        # center = np.reshape(center,(3,0))
+        super().__init__(start,
+                         end,
+                         center.flatten(),
+                         **kwargs)
 
 class CAD_ArrowHead(Curve_Warp):
     def __init__(self,
