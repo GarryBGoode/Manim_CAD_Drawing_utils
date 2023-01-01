@@ -219,11 +219,11 @@ class Angle_Dimension_3point(VDict):
                        **kwargs)
         arc_p0 = base_arc.point_from_proportion(0)
         arc_p1 = base_arc.point_from_proportion(1)
-        line1 = Line(start=start,
+        line1 = Line(start=start + normalize(arc_p0-start) * ext_line_offset,
                      end=arc_p0 + normalize(arc_p0-start)*tip_len,
                      **kwargs
         )
-        line2 = Line(start=end,
+        line2 = Line(start=end + normalize(arc_p1-end) * ext_line_offset,
                      end=arc_p1 + normalize(arc_p1-end)*tip_len,
                      **kwargs
                      )
@@ -271,7 +271,7 @@ class Angle_Dimension_3point(VDict):
         elif isinstance(text,Mobject):
             textmob = text
         else:
-            textmob = Text(f"{abs(angle_1/DEGREES):.0f}",**kwargs)
+            textmob = Text(f"{abs(angle_1/DEGREES):.0f}°",**kwargs)
 
         pos_text = base_arc.point_from_proportion(0.5)
         angle_text = (angle_of_vector(base_arc.point_from_proportion(0.5+1e-6) -

@@ -56,14 +56,16 @@ class test_angle(Scene):
         dim2 = Angle_Dimension_3point(mob1.get_nth_curve_points(2)[0],
                                       mob1.get_nth_curve_points(1)[0],
                                       mob1.get_nth_curve_points(0)[0],
-                                      offset=-1,
+                                      offset=2,
                                       outside_arrow=False,
+                                      ext_line_offset=-2,
                                       color=RED)
         dim3 = Angle_Dimension_3point(mob1.get_nth_curve_points(1)[0],
                                       mob1.get_nth_curve_points(0)[0],
                                       mob1.get_nth_curve_points(2)[0],
                                       offset=1.5,
                                       outside_arrow=True,
+                                      ext_line_offset=0.2,
                                       color=RED)
         dbg = Bezier_Handlebars(dim3['arrow_1'])
         self.add(mob1,dim2,dim3,dbg)
