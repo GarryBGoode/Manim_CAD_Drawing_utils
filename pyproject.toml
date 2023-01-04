@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "manim-CAD_Drawing_Utils"
-version = "0.0.2"
+version = "0.0.3"
 description = "A collection of utility functions to for creating CAD-like visuals in Manim."
 license = "MIT"
 authors = ["GarryBGoode"]
@@ -24,7 +24,6 @@ classifiers= [
 python = ">=3.8,<=3.11"
 manim = ">=0.15.2,<=1.0"
 scipy = "*"
-bezier = "*"
 
 [tool.poetry.plugins."manim.plugins"]
 "manim_cad_drawing_utils" = "manim_cad_drawing_utils"
