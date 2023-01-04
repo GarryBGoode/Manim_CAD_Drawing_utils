@@ -1,5 +1,6 @@
 import numpy as np
 from manim import *
+from scipy.optimize import root
 import bezier as bz
 
 class Hatch_lines(VGroup):
@@ -33,7 +34,9 @@ class Hatch_lines(VGroup):
 
 
 def curve_intersection(vmob1: VMobject, vmob2: VMobject):
-    """intersection points of 2 curves"""
+    """Intersection points of 2 VMobjects.
+    Finds all intersections of 2 vmobjects, as long as there is only 1 interesection per bezier subcurve.
+    Self intersections are not found."""
 
     intersect_indx_1 = np.array([])
     intersect_indx_2 = np.array([])
@@ -52,15 +55,16 @@ def curve_intersection(vmob1: VMobject, vmob2: VMobject):
             overlap = not (distinct_x or distinct_y)
 
             if overlap:
-                bzcurve_1 = bz.Curve(np.swapaxes(curve_1[:, 0:2], 0, 1), 3)
-                bzcurve_2 = bz.Curve(np.swapaxes(curve_2[:, 0:2], 0, 1), 3)
-                # intersect = bzcurve_1.intersect(bzcurve_2,
-                # strategy=intersection_helpers.IntersectionStrategy.ALGEBRAIC)
-                intersect = bzcurve_1.intersect(bzcurve_2)
-                if np.shape(intersect)[1] > 0:
-                    intersect_indx_1 = np.append(intersect_indx_1, intersect[0, :] + i)
-                    intersect_indx_2 = np.append(intersect_indx_2, intersect[1, :] + j)
+                curve_fun_1 = vmob1.get_nth_curve_function(i)
+                curve_fun_2 = vmob2.get_nth_curve_function(j)
+
+                sol = root(lambda t: (curve_fun_1(t[0])[0:2]-curve_fun_2(t[1])[0:2]),np.array((0.5,0.5)))
+                if sol.success:
+                    if 0 < sol.x[0] < 1 and 0 < sol.x[1] < 1:
+                        intersect_indx_1 = np.append(intersect_indx_1, sol.x[0] + i)
+                        intersect_indx_2 = np.append(intersect_indx_2, sol.x[1] + j)
 
     return intersect_indx_1, intersect_indx_2
+
 
 

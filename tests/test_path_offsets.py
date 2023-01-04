@@ -1,5 +1,6 @@
 import numpy as np
 from manim import *
+from scipy.optimize import root
 from manim_cad_drawing_utils import *
 
 
@@ -101,6 +102,7 @@ class test_sq_wave(Scene):
         dbg = Bezier_Handlebars(ofspath)
         self.add(ofspath,dbg)
 
+
 class Test_warp(Scene):
     def construct(self):
         mob = Triangle(fill_opacity=1,fill_color=TEAL).scale(0.2).rotate(-PI/2).move_to(ORIGIN)
@@ -126,6 +128,8 @@ class Test_warp(Scene):
         self.play(mob.animate.stretch(1/5,0))
 
 
-# with tempconfig({"quality": "medium_quality", "disable_caching": True}):
-#     scene = test_sq_wave()
-#     scene.render()
+
+if __name__=="__main__":
+    with tempconfig({"quality": "medium_quality", "disable_caching": True}):
+        scene = test_sq_wave()
+        scene.render()

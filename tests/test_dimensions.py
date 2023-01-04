@@ -1,6 +1,7 @@
 from manim import *
 from manim_cad_drawing_utils import *
 
+
 class test_dimension_pointer(Scene):
     def construct(self):
         mob1 = Round_Corners(Triangle().scale(2),0.3)
@@ -15,6 +16,7 @@ class test_dimension_pointer(Scene):
         self.play(Uncreate(mob1,rate_func=PM.equalize_rate_func(smooth)))
         self.play(Uncreate(dim1))
         self.wait()
+
 
 class test_dimension_base(Scene):
     def construct(self):
@@ -36,6 +38,7 @@ class test_dimension_base(Scene):
                                 text='something something lorem ipsum dolores',
                                 color=RED)
         self.add(mob1,dim0,dim1,dim2)
+
 
 class test_dimension(Scene):
     def construct(self):
@@ -59,6 +62,7 @@ class test_dimension(Scene):
         self.wait(3)
         self.play(Uncreate(mob1), Uncreate(dim2))
 
+
 class test_angle(Scene):
     def construct(self):
         mob1 = Triangle().scale(2)
@@ -78,6 +82,7 @@ class test_angle(Scene):
                                       color=RED)
         self.add(mob1,dim2,dim3)
 
+
 class test_arrow(Scene):
     def construct(self):
         mob1 = Round_Corners(Triangle().scale(2), 0.3)
@@ -90,6 +95,8 @@ class test_arrow(Scene):
         self.add(mob1,arrow)
         self.play(vt.animate.set_value(1),run_time=6, rate_func=PM.equalize_rate_func(rate_functions.linear))
 
-# with tempconfig({"quality": "medium_quality", "disable_caching": True}):
-#     scene = test_dimension()
-#     scene.render()
+
+if __name__=="__main__":
+    with tempconfig({"quality": "medium_quality", "disable_caching": True}):
+        scene = test_dimension()
+        scene.render()

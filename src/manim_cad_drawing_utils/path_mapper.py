@@ -305,7 +305,7 @@ class Path_Offset_Mobject(VMobject):
         self.discontinuities = discontinuities
 
         self.t_range = np.linspace(0, 1, num_of_samples)
-        if discontinuities:
+        if discontinuities != []:
             t_disc = np.sort(
                 np.concatenate((np.array(self.discontinuities) + 1e-7, np.array(self.discontinuities) - 1e-7)))
             self.t_range=np.sort(np.concatenate((self.t_range,t_disc)))
