@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "manim-CAD_Drawing_Utils"
-version = "0.0.3"
+version = "0.0.4"
 description = "A collection of utility functions to for creating CAD-like visuals in Manim."
 license = "MIT"
 authors = ["GarryBGoode"]
