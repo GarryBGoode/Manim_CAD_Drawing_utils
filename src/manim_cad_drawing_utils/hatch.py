@@ -1,7 +1,6 @@
 import numpy as np
 from manim import *
 from scipy.optimize import root
-import bezier as bz
 
 class Hatch_lines(VGroup):
     def __init__(self, target_mobject: Mobject, angle=PI/6, offset=0.3,**kwargs):
