@@ -141,7 +141,7 @@ class Test_round(Scene):
         mob1 = Round_Corners(mob1, 0.25)
         mob2 = Round_Corners(mob2, 0.25)
         mob3 = Round_Corners(mob3, 0.25)
-        self.add(mob1,mob2,mob3,mob4))
+        self.add(mob1,mob2,mob3,mob4)
 ```
 ![rounded_corners](/media/examples/round_corners.png)
 
