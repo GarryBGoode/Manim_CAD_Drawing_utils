@@ -251,7 +251,7 @@ class Dashed_line_mobject(VDict):
         ret=[]
         for i in range(len(dash_starts)):
             mobcopy = VMobject().match_points(ref_mob)
-            ret.append(mobcopy.pointwise_become_partial(mobcopy,a_list[i],b_list[i]))
+            ret.append(mobcopy.pointwise_become_partial(ref_mob,a_list[i],b_list[i]))
         return VGroup(*ret)
 
 
