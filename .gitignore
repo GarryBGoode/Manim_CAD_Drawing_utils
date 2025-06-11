@@ -141,6 +141,4 @@ cython_debug/
 .idea
 
 # media outputs
-media/images/
-media/videos/
-media/texts/
+**/media/**
